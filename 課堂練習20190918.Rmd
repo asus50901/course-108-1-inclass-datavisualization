@@ -1,0 +1,365 @@
+---
+title: "課堂練習 2019 09 18"
+author: "Y.T Lin"
+date: "2019/9/18"
+output: html_document
+---
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+  In class code for 2019_09_18. 
+
+### Data Cleaning
+
+```{r Generating data.frame}
+################# List then Transformed to data.frame #################
+StuList <- list(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+)
+StuList 
+
+as.data.frame(StuList) -> StuDFfromList
+StuDFfromList
+
+ ################# Generating a Data.frame #######################
+
+StuDF <- data.frame(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+)
+StuDF 
+
+  # str(StuDF)
+```
+
+
+```{r class() and typeof()}
+################ class() and typeof() ###############
+  ## Observing the class and type of an environment object (class != type)
+
+class(StuDF) # data.frame
+typeof(StuDF) # list
+
+class(StuList) # list
+typeof(StuList) # list
+```
+
+```{r length() and nrow()}
+############# length() and nrow() #################
+
+  ## to find out the "size" of the dataset
+length(StuDF) # 5
+nrow(StuDF) # 8
+```
+
+```{r str()}
+str(StuDF) # check the structure of the dataset 
+head(StuDF) # show the first 5 obs.
+tail(StuDF) # show the last five obs.
+```
+
+```{r slice()}
+StuDF
+dplyr::slice(StuDF, 1:3) # slice() is to show a portion of the dataset
+slice(StuDF, 4:5)
+slice(StuDF, n()) # n() is to show how many obs. are there in the dataset.
+
+## to show the last 2 obs.
+dplyr::slice(StuDF, (n()-1):n())
+```
+
+```{r slice practice}
+StuDF
+slice(StuDF,-5:-7) # Delete the 5,6, and 7 obs.
+slice(StuDF, -(5:7))
+slice(StuDF, c(-5,-6,-7))
+
+```
+
+```{r}
+slice(StuDF, c(1,4,8))
+```
+
+```{r 106 student slice}
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+
+str(collegeData)
+
+dplyr::slice(collegeData, 1:4)
+dplyr::slice(collegeData, (n()-2):n())
+dplyr::slice(collegeData, 101:110)
+```
+
+#### Mutate() and Transmute()
+```{r mutate and transmute}
+StuDF
+mutate(StuDF,
+       調分後成績=成績+10) # retain other variables as well
+
+transmute(StuDF,
+       調分後成績=成績+10) # Only leave the new created variable
+
+## Remember to save as a new object
+
+## Not using the dplyr PKG functions (Mutate)
+StuDF$調分後成績 <- StuDF$成績+10
+
+```
+
+```{r mutate practice}
+collegeData <- mutate(collegeData,
+       男生 = 一年級男生 + 二年級男生 + 三年級男生 + 四年級男生, 
+       女生 = 一年級女生 + 二年級女生 + 三年級女生 + 四年級女生,
+       男女生比 = 男生 / 女生)
+
+collegeData[1:10,] 
+```
+
+#### Summarise ()
+
+```{r summarise}
+## to see the check the basic stats.
+
+StuDF
+summarise(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+```
+
+```{r change summarise to mutate}
+mutate(StuDF,        
+       平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+```
+
+```{r summarise practice}
+summarise(StuDF, 
+          最高分=max(成績),
+          最低分=min(成績),
+          調整後成績 = (最高分 - 最低分)/5)
+
+## Generate the adjusted scores with mutate
+mutate(StuDF, 
+       調整後分數 = 成績 + (max(成績) - min(成績))/5)
+```
+
+#### Select
+
+```{r select}
+## Select() is for choosing variables
+
+
+StuDF2 <- mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+
+StuDF2
+
+names(StuDF2) # Check the variables' names
+select(StuDF2,
+       姓名,學號,成績,調分後成績) # snatch out the desired variables
+
+select(StuDF2,
+       -次序,-性別,-最高分,-最低分) # NOT choosing the varaibles
+
+```
+
+select可搭配select helpers:
+starts_with(): Starts with a prefix.
+
+ends_with(): Ends with a suffix.
+
+contains(): Contains a literal string.
+
+matches(): Matches a regular expression.
+
+num_range(): Matches a numerical range like x01, x02, x03.
+
+one_of(): Matches variable names in a character vector.
+
+everything(): Matches all variables.
+
+last_col(): Select last variable, possibly with an offset.
+
+```{r some examples for the select helpers}
+select(StuDF2,
+       次序,性別,
+       contains("最")) # choose 次序 性別 and all vars containing the word "最"
+
+select(StuDF2,
+       -次序,-性別,
+       -contains("最")) 
+```
+
+```{r select prac. collegeData}
+select(collegeData, contains("男生"))
+```
+
+
+#### Filter
+ 
+ To Choose the obs. that matches to the description
+ 
+```{r filter}
+StuDF
+
+# logical vector
+logiChoose <- c(
+  F,F,F,T,T,F,T,F
+)
+
+# 使用logical vector選擇所要觀測值"女"
+StuDF[logiChoose,]
+
+## Using filter()
+
+StuDF %>% filter( 性別 == "女")
+
+## Using which() and the logical Vector
+logiChoose
+which(logiChoose) # 4, 5, 7
+
+slice(
+  StuDF,which(logiChoose)
+)
+
+  # Logical Predicate
+StuDF$性別=="女" # logical predicate
+
+logiChoose <- StuDF$性別=="女"
+StuDF[logiChoose,]
+
+## Logical predicate can be generated by: 
+  ## Relation Operator: a > b
+  ## Logical Operater: a|b (or), a & b , (a & b) ! c (! = NOT)
+
+(StuDF$性別=="女" & StuDF$成績>60) -> logiChoose2
+logiChoose2
+
+StuDF[logiChoose2,]
+
+## Back to using filter()
+
+filter(StuDF, 性別 == "女")
+
+ ## Multiple descriptions
+filter(StuDF,
+       (性別=="女" & 成績>60))
+
+    # OR
+
+filter(StuDF,
+       性別=="女",
+       成績>60) # 多個AND條件可用,分隔
+```
+
+```{r filter prac. collegeData}
+collegeData %>% filter(縣市名稱 == "30 臺北市")
+
+collegeData %>% filter(縣市名稱 == "30 臺北市" | 縣市名稱 == "01 新北市")
+
+# Using %in%
+collegeData %>% filter(縣市名稱 %in% c("30 臺北市", "01 新北市"))
+```
+
+#### group_by() 分群計算
+
+```{r group_by}
+StuDF_by性別 <- group_by(StuDF, 性別)
+
+summarise(StuDF_by性別,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+
+  # change score by different gender groups 
+
+mutate(
+  StuDF_by性別,
+  最高分=max(成績),
+  最低分=min(成績),
+  調分大小=(最高分-最低分)/5,
+  調分後成績=成績+調分大小
+) -> StuDF_依性別調分
+
+StuDF_依性別調分
+
+  ### Group by gender and score
+StuDF_by性別成績 <- group_by(StuDF, 性別, (成績>75))
+
+summarise(StuDF_by性別成績,
+          平均成績=mean(成績),
+          人數=n())
+
+## Use ungroup() 
+
+ungroup(StuDF_依性別調分) -> 
+  StuDF_調分後
+```
+
+```{r group_by prac.collegeData}
+
+  collegeData %>% 
+    group_by(縣市名稱, 體系別, 等級別) %>%
+    summarise(一年級男生總數 = sum(一年級男生),
+            一年級女生總數 = sum(一年級女生),
+            學校數目 = length(unique(學校代碼)))
+    
+
+```
+
+
+#### 1.3 Pipe Operators
+
+%>% pipe operator:
+
+* 預設：%>% 把它左邊（LHS）的物件流入它右邊（RHS）函數的argument第一個位置。 )
+
+* 若要流入右邊函數的「非」第一位置argument，則用.在右邊函數中標示。
+
+* %>% 可進行串接，則下一個%>%會以上個函數輸出結果當做新的LHS物件。
+
+```{r piping prac collegedata}
+collg <- collegeData %>% 
+  group_by(等級別, 縣市名稱) %>%
+  dplyr::summarise(一年級男生總數 = sum(一年級男生),
+                   一年級女生總數 = sum(一年級女生),
+                   一年級男女比 = (一年級男生總數 / 一年級女生總數)) %>%
+  ungroup() 
+
+locmax <- collg[which.max(collg$一年級男女比), ]
+locmax
+```
+
+```{r piping prac. transcript}
+# Get transcriptDataFinal
+
+load(url("https://www.dropbox.com/s/duh5aaqgl2f5m3z/loopTranscriptData.Rda?raw=1"))
+
+# 計算每位學生每個學期的平均成績
+transcriptDataFinal %>%
+    group_by(學號,學年,學期) %>%
+  dplyr::summarise(
+    平均成績=sum(學期成績*學分數)/sum(學分數)
+  )
+
+#計算每位學生每學期學分數在必/選/通 三類的學分數比重。
+
+#學屆為100（即100學年入學）的學生，各系學生在學所修總學分數之中位數，何系最高？
+```
