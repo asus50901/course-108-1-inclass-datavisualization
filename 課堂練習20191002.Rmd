@@ -1,0 +1,192 @@
+---
+title: "課堂練習 2019_10_02"
+author: "Y.T Lin"
+date: "2019/10/2"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+Inclass codes for data visualiztion 2019_10_02 .
+
+Last week, we talked about some basics for the ggplot2 package and drawed a few simple plots for the touch of it.  
+
+## HW Stipulations
+
+  To hand in the weekly assignment, you will need to follow the templates set in "每周一圖作業.RMD".If you have a distinctive CSV file rather than a URL code line in the code script, the CSV file will have to the turned in as well. The stand alone CSV data file will have to be named "graphData.CSV".
+
+  The prerequirements for the graphing homework, you will first perform a simple data cleaning. The preferred dataset class is "LIST". Other than the maiin course of graphing, you are required to write a short block of explanation to construe the data you are to graph. The context must expatiate the data itself and also the phenomenon it represents.The above info is demonstrated in the "每周一圖作業.RMD". 
+  
+  The weekly assignment must be turned in with the R markdown file (RMD) along with your graphData file (that is, if you have one). If you have multiple data files amerlated for graphing purpose, you must first combine your data BeEFORE the data cleaning process AND transform it in to a "DATAFRAME" then export it into a "RDA" file. Your graphData must only contain a single file, also, the RDA file only contains a single dataset. The code block tags are not to be changed, EVER.
+  
+## Ch3. Aesthetic Scales
+
+```{r chapter setup}
+library(grDevices) # 不同顏色模型代碼的呈現及轉換
+library(scales) # show_col()螢幕立即顯示顏色
+library(colorspace) # 調色盤選擇及ggplot應用工具
+library(shinyjs) # 支援套件
+```
+
+```{r playing around RGB}
+rgb(0,0,1) # color code returns "#0000FF"
+rgb(0.5, 0, 0.7) # color code returns "#8000B3"
+
+
+scales::show_col(c(rgb(0,0,1),rgb(0.5,0,0.7))) 
+  # show what the color code color is 
+```
+
+```{r playing around HSV}
+
+ # hsv(Hue = , Saturation = , Value = )
+scales::show_col(
+  c(
+    hsv(30/360,0,0),hsv(30/360,0.5,0),hsv(30/360,1,0), # (,,lightness=0) 全暗
+    hsv(30/360,0,0.5),hsv(30/360,0.5,0.5),hsv(30/360,1,0.5), # (,,lightness=0.5)
+    hsv(30/360,0,1),hsv(30/360,0.5,1),hsv(30/360,1,1) # (,,lightness=1) 全亮
+  )
+)
+```
+
+```{r colorspace playing, echo=T, eval = F}
+
+colorspace::choose_color() # choose the desired color and returns a color code
+
+```
+
+## Palette
+
+```{r colorspace palette,  echo=T, eval = F}
+
+colorspace::choose_palette(gui = "shiny") 
+
+# After we finish the color selection, we will have to click on the "EXPORT" button, export to R, then copy the codelines under the title "Register custom color palette"
+
+# Remember to change the name of the collection of colors "Custom-Palette" into something else.
+# example shown in the below ggplot2 apply
+```
+
+```{r RColorBrewer}
+library(RColorBrewer)
+display.brewer.pal(7,"Accent")
+display.brewer.all()
+```
+
+For different types of data, the color selection criterion differs. Details are presented in the below code chunks:  
+
+```{r colorspace qualitative hcl}
+pal_qual <- colorspace::qualitative_hcl(
+  n = 7, 
+  h = c(0, 360), c = 35, l = 85, 
+  register = "myQualitative"
+  )
+
+pal_qual %>% specplot(hcl=F)
+ # Categorical data requires a discernible color selection
+```
+
+```{r colorspace sequential hcl}
+pal_seq <- colorspace::sequential_hcl(
+  n = 7, 
+  h = 135, c = c(45, NA, NA), l = c(35, 95), 
+  power = 1.3, 
+  register = "mySequential")
+
+pal_seq %>% specplot(hcl=F)
+  # Continuous data type requires a selection of colors to show the heirarchical difference between the values.
+```
+
+```{r solorspace diverging data}
+pal_diverge <- colorspace::diverging_hcl(
+  n = 7, 
+  h = c(260, 0), c = 80, l = c(30, 90), 
+  power = 1.5, 
+  register = "myDiverge")
+
+pal_diverge %>% specplot(hcl=F)
+  # Diverging data requires to emphasize the bilateral differences. A set of contrasting color choice is preferred.
+```
+
+## CH3.1.2 GGPLOT Application
+
+  Now, we get back to the ggplot2 package. In this section, we strive to apply the former color selection process onto the graphical representation.  
+  
+  We start by making a example dataframe:
+```{r ggplot apply - example making}
+data.frame(
+  x1 = factor(sample(c(1L,2L,3L),100,replace=T)),
+  x2 = runif(100),
+  y = runif(100),
+  z1 = rnorm(100),
+  z2 = factor(sample(letters[1:4],100,replace=T))
+) -> df_example
+```
+
+Then, we draw a basic boxplot
+```{r ggplot apply - boxplot and point (basic)}
+basicboxplot <- df_example %>%
+  ggplot(aes(x = x1, y = y, fill = z2)) +
+  geom_boxplot() #fill can change the filling of the plot
+
+basicboxplot
+
+basicScatterplot <- df_example %>%
+  ggplot(aes(x = x2, y = y, color = z1)) +
+  geom_point() #fill can change the filling of the plot
+
+basicScatterplot
+```
+
+```{r ggplot apply - use palette, eval=F}
+ colorspace::choose_palette(gui = "shiny")
+
+colorspace::qualitative_hcl(n = 7, h = c(0, 360), c = 35, l = 85, register = "exampleforclass")
+
+basicboxplot + 
+  scale_fill_discrete_qualitative(palette = "exampleforclass", nmax = 5)
+
+colorspace::sequential_hcl(n = 17, h = 360, c = c(100, NA, NA), l = c(18, 98), power = 1.3, register = "exclass2")
+
+basicScatterplot +
+  scale_color_continuous_sequential(palette = "exclass2")
+```
+
+ The "RColorBrewer" can also be applied. You might want to check the color codes for different brewer palette.
+```{r ggplot apply - colorbrewer}
+basicboxplot + 
+  scale_fill_brewer(type = "qual", palette = 3)
+
+basicboxplot + 
+  scale_fill_brewer(palette = "Dark2") 
+
+# scale_fill_brewer and scale_color_brewer are for discrete values ONLY
+```
+
+## 3.4 Practice
+
+```{r color selection practice, eval=F}
+library(readr)
+disposableIncome <- read_csv("https://www.dropbox.com/s/z80sbjw94cjex8x/disposableIncome.csv?dl=1",
+locale = locale(encoding = "BIG5"), skip = 4)
+
+disposableIncome_gather <- disposableIncome %>%
+  tidyr::gather(dplyr::contains("可支配所得"), key = "類別", value = "可支配所得")  %>%
+  mutate("年" = as.integer(X1)) %>% slice(33:43)
+# Unfinished, needs refinement
+
+
+disposableIncome_gather %>% 
+  ggplot( aes( x = X1, y = `可支配所得`, color = 類別) ) +
+  geom_path()
+
+```
+
+
