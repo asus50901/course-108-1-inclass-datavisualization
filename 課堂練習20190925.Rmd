@@ -86,7 +86,7 @@ df_spreadExample
    # the opposite of gather()
 
 spread(df_spreadExample,
-       var,value)
+       var,value) 
 ```
 
 ```{r spread prac.}

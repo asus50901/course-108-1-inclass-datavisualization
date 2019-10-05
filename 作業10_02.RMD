@@ -1,0 +1,162 @@
+---
+title: "每周一圖作業10_02"
+author: "Y.T Lin"
+date: "2019/10/4"
+output: html_document
+params:
+  組員: ["林易霆"]  
+  學號: ["410473002"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+#### 資料處理
+
+此部份在做：
+
+  * 原始Rda資料引入（即引入**dataList**物件）；
+  
+  * 資料清理成作圖用graphData物件。
+
+請將你最原始的資料連同作業一起上傳到作業上傳網址：  
+  * 若「原始資料為網頁下載」，且下載指令寫在data cleaning chunk裡的話，可以不用上傳「資料」。  
+  * 若原始資料有很多個檔案，請先引入成data frame並存在「一個」.Rda檔裡上傳（如`example_data.Rda`檔）。  
+
+資料檔引入到進入作圖前的資料處理請寫在下面區塊，分二部份：
+
+  * 資料處理  
+  * 作圖用資料物件生成
+  
+```{r data cleaning, echo=TRUE, eval=T}
+graphData <- read_csv("https://ws.moe.edu.tw/001/Upload/4/relfile/0/4764/a27e7193-392e-4780-9133-f27d3a65c791.csv", 
+                 locale = locale(encoding = "BIG5"))
+
+# 92 ~ 105學年度 就學貸款申請人次、人數、金額 
+# 申請貸款人次 = 上下學期各算一次，一學年所有學生申請的總次數
+# 申請貸款人數
+# 申請貸款的金額
+
+# graphData %>% View
+
+str(graphData) # check the data structure
+
+ # forgot the quicker way, spread the document manually.
+pub.col <- graphData %>% select(c(1:3)) %>%
+  spread(key = 項目, value = 公立大專校院) %>% mutate(類型 = "公立大專校院")
+
+prv.col <- graphData %>% select(c(1, 2, 4)) %>%
+  spread(key = 項目, value = 私立大專校院) %>% mutate(類型 = "私立大專校院")
+
+pub.high <- graphData %>% select(c(1, 2, 5)) %>%
+  spread(key = 項目, value = 公立高中職) %>% mutate(類型 = "公立高中職")
+
+prv.high <- graphData %>% select(c(1, 2, 6)) %>%
+  spread(key = 項目, value = 私立高中職) %>% mutate(類型 = "私立高中職")
+
+ # glue it back to one piece :(
+graphData.spread <- rbind(pub.col, prv.col, pub.high, prv.high, stringsAsFactors = T) %>%
+arrange(學年度) %>% mutate(類型 = as.factor(類型))
+
+ # rm(list = c("pub.col", "prv.col", "pub.high", "prv.high")), clean up 
+
+levels(graphData.spread$類型) # check the levels order
+
+graphData.tidy <- graphData.spread %>%
+  mutate(當年平均貸款次數 = 貸款人次 / 貸款人數,
+         當年平均貸款金額 = `貸款金額（元）` / 貸款人次,
+         學制 = case_when(類型 == "公立大專校院" | 類型 == "私立大專校院"  ~ "大專校院", 
+                    類型 == "公立高中職" | 類型 == "私立高中職"  ~ "高中職")) %>%
+  group_by(學制) %>%
+  mutate(公私立平均貸款次數 = mean(當年平均貸款次數),
+         公私立平均貸款金額 = mean(當年平均貸款金額)) %>%
+  ungroup()
+
+
+```
+
+#### 繪圖程式
+
+```{r graph, echo=T, eval=T}
+# line graph of the average times student apply for loan each year
+library(ggthemes); library(colorspace)
+
+# colorspace::choose_palette(gui = "shiny")
+# colorspace::choose_color() , choose "#923DBE" for specific lines
+
+colorspace::qualitative_hcl(n = 7, h = c(10, -350), c = 50, l = 80, register = "HWpalette1")
+
+# palette returns an obscure color set, just choose them manually.
+
+avg.loan.freq <- graphData.tidy %>%
+  ggplot(aes(x = 學年度, y = 當年平均貸款次數, color = 類型)) +
+  geom_line(size = 1.5) +
+  scale_x_continuous(breaks = c(92:105)) + # make sure x axis prints every year
+  scale_color_manual(values = c(公立大專校院 = "#FFB3B5", 
+                                私立大專校院 = "#AAC8FC", 
+                                公立高中職 = "#95D69A",
+                                私立高中職 = "#DAC584")) + 
+# add the average loan times for different education levels
+  geom_line(aes(x = 學年度, y = 公私立平均貸款次數,  group = 學制),
+            linetype = "twodash", size = 1, color = "#923DBE", alpha = 0.6) + 
+# add in the annotations for better understanding
+  annotate("text", x = 95, y = 1.54, 
+           label = paste('水平線為該學制之學年平均貸款次數'), size = 3) +
+  annotate("text", x = 103.5, y = 1.85, 
+           label = paste("平均一學年 1.825 次"), size = 3) +
+  annotate("text", x = 103.5, y = 1.725, 
+           label = paste("平均一學年 1.714 次"), size = 3) +
+  labs(title = "每學年學生申請學貸之平均次數",
+       caption = "資料來源: 台灣政府公開資料庫") +
+  theme(plot.title = element_text(size = 14, face = "bold",    
+                                        hjust = 0.5), 
+              plot.caption = element_text(face = "italic"),
+        plot.background = element_rect(fill = "#FBDFB3"),
+        legend.box.background = element_rect(),
+        legend.box.margin = margin(6,6,6,6), 
+        panel.border = element_rect(linetype = "solid", fill = NA),
+        panel.grid.major = element_line(color = "grey90"),
+        panel.grid.minor = element_line(color = "grey90"))
+
+# Change the color of 學制
+avg.loan.freq
+
+# college students tend to apply loan more often than high school students
+  # perhaps the tuition is much higher in college
+
+# highschool loans drop dramatically after year 98
+
+# private highschool more loans while public college has more loans in college
+
+
+```
+
+#### 設計說明
+說明想傳達的訊息（必要）及設計想法（非必要）。寫在***之後
+*** 
+
+該圖為台灣92學年度至105學年度公私立高教機構學生之平均申請學貸次數的趨勢圖。橫軸為各學年度，縱軸為當年各機構的平均申請學貸次數。繪圖的高教機構分為四組: 公立大專校院、私立大專校院、公立高中職、以及私立高中職。因每學年分上下學期，且原始資料中不含高教機構分組的總學生數。故無法得知各高教機構分組對於學貸需求的急切性。若以是否上下學期皆申請學貸作為判斷依據，或能窺探該高教機構組別對於學貸之需求。  
+\  
+
+整體來說，大專校院申請學貸的比例遠高出高中職的申請比例。此現象可能原自學制間的學費差異，高中職的學費應低於大專院校之學費，不同學制難以互相比較。兩學制的歷年平均申請貸款次數也具明顯的差異，更加凸顯學制間不可比較的特性。  
+\  
+
+大專校院的歷年平均申請次數為1.825次。由圖形中的趨勢可發現，公立以及私立體系的申請學貸次數皆在平均線上震盪。此現象意味著公私體系的大專校院學生對於學貸的需求較為相近。若要重新分配學貸資金的比例可能需要更加詳細的調查。  
+\  
+
+高中職的歷年平均申請次數相較大專校院稍低一些，為1.714次。但私立高中職的申請次數普遍遠高於公立高中職的申請次數，也就是說，私立高中職的學生有較多的學生在一學年中的上下學期皆申請學貸。此現象可能緣由私立高中職的學費遠高於公立高中職，導致較多的學生須申請學貸來減輕學費的壓力。若能將學貸資金分配於私立學校或許是比較能幫助到學生的政策。且自98、99年以後，高中職的申請學貸次數便急速的減低，而大專校院卻仍維持震盪現象，並無降低的趨勢。此可能代表就讀大專院校的學生較就讀高中職的學生更加需要學貸的申請。若能將學貸資金於各學制間的比例重新調整，或許是更為有效的政策。  
+\  
+
+```{r demonstrate graph, echo = T, eval = T}
+avg.loan.freq %>% ggplotly()
+```
+
