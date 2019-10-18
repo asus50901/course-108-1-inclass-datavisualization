@@ -1,0 +1,160 @@
+---
+title: "每周一圖作業3"
+author: "410473002 林易霆"
+date: "2019/10/18"
+output: html_document
+params:
+  組員: ["林易霆"]  
+  學號: ["410473002"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+#### 資料處理
+
+此部份在做：
+
+  * 原始Rda資料引入（即引入**dataList**物件）；
+  
+  * 資料清理成作圖用graphData物件。
+
+請將你最原始的資料連同作業一起上傳到作業上傳網址：  
+  * 若「原始資料為網頁下載」，且下載指令寫在data cleaning chunk裡的話，可以不用上傳「資料」。  
+  * 若原始資料有很多個檔案，請先引入成data frame並存在「一個」.Rda檔裡上傳（如`example_data.Rda`檔）。  
+
+資料檔引入到進入作圖前的資料處理請寫在下面區塊，分二部份：
+
+  * 資料處理  
+  * 作圖用資料物件生成
+  
+```{r data cleaning, echo=TRUE, eval=T}
+graphData <- list()
+
+#land <- read_csv(file = "data/新北市107年公告土地現值及公告地價-林口區_0003717273389856521827.csv")
+
+#land <- as.data.frame(land)
+
+#save(land, file = "data/LinKou_landprice.rda")
+
+load(file = "data/LinKou_landprice.rda") 
+graphData$land.price <- land
+
+# 107年新北市林口區公告土地現值&地價
+# country(縣市別)、district(行政區) -> Useless
+# segment(段小段)
+# lid(地號) -> more like ID num., useless as it is
+# official_value(公告現值)、official_price(公告地價)
+
+# graphData$land.price %>% View
+
+str(graphData$land.price) # check the data structure
+
+# factorizing all the chr. class vars.
+graphData$land.price[sapply(graphData$land.price, is.character)] <- lapply(graphData$land.price[sapply(graphData$land.price, is.character)], 
+                                       as.factor)
+
+str(graphData$land.price) # lid is so wrong :P
+
+levels(graphData$land.price$segment) 
+# too many segments, we need to bind them for better drawing effect, yeah?
+
+## Let's make a new sublist for all that
+graphData$new.land <- graphData$land.price %>%
+  dplyr::select(c(3, 5, 6)) %>%
+  mutate(segment = as.character(segment),
+         district = substr(segment, 1, 3)) %>%
+  mutate(segment = as.factor(segment), 
+         district = case_when(
+           !grepl("段", district) ~ paste(district, "段", sep = ""), # Case1
+           T ~ district)) %>%                                        # Case2
+  mutate(district = as.factor(district)) %>%
+  select(-segment)
+
+str(graphData$new.land) # check everything is fine. 
+
+levels(graphData$new.land$district) 
+  # successfully decreased 35 segments to 18 districts
+
+# graphData$new.land is for drawing.
+
+```
+
+#### 繪圖程式
+
+```{r graph, echo=T, eval=T}
+library(ggthemes); library(colorspace)
+
+# colorspace::choose_palette(gui = "shiny")
+# colorspace::choose_color() 
+
+# How bout a box plot this week?
+house.plot <- graphData$new.land %>% ggplot() +
+  geom_boxplot(aes(x = district, y = official_price, fill = district),
+               show.legend = F) +
+  geom_hline(yintercept = c(20000, 40000), linetype = "twodash", 
+             color = "steelblue") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        plot.subtitle = element_text(hjust = 0.5, size = 12),
+        plot.caption = element_text(size = 5),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(angle = 30, vjust = 0.3),
+        plot.background = element_rect(fill = "#FBDFB2"),
+        panel.background = element_rect(fill = "#FBDFB2")) +
+  labs(x = NULL, y = NULL, title = "林口區107年公告地價分布",
+       caption = "資料來源: 台灣政府資料開放平台", subtitle = "依照街段呈現") +
+  annotate("text", x = 4, y = 18500, label = paste("20000 (元/平方公尺)"),
+           size = 3, color = "steelblue") +
+  annotate("text", x = 5.5, y = 38500, label = paste("40000 (元/平方公尺)"),
+           size = 3, color = "steelblue") +
+  annotate("text", x = 16, y = 50000,
+           label = paste("平均地價為: ",
+                         round(mean(graphData$new.land$official_price)),
+                         " (元/平方公尺)"),
+           size = 3, color = "black")
+
+house.plot
+
+```
+
+#### 設計說明
+說明想傳達的訊息（必要）及設計想法（非必要）。寫在***之後
+***   
+  
+##### 附圖說明  
+\  
+
+該筆資料為新北市林口區各街段於民國107年的公告地價盒形圖。  
+由圖中各街段的"盒子"可知，僅有少部分的地段具有較高的公告地價。此些地段不僅為相對高價地段，此些街區和其他街區的公告地價相比具有誇張的差距。其中又以"力行段"的公告地價相差最大，該地段的中位數遠遠超過其他地段的中位數且其組內的差距也十分大，更加拉大林口區公告地價的高低差異。  
+\  
+
+另兩地段: "建林段" 以及 "國宅段" 也較其他地段的公告地價中位數高出些許，但最主要的影響仍是此兩地段眾多的離群值。建林段的離群值效果極度明顯，不僅離群值高出力行段的第三四分位距且離群值的數量非常多。國宅段的離群值雖較建林段來的少，但仍可見此地段和其他地段的差異。  
+又由圖中的兩條輔助線以及上方全地段平均公告地價可窺見上述三個地段和其他地段的地價差異。林口地區雖然常有高房價、值得投資房地產的印象，但或許僅侷限在此三個地段而已。  
+\  
+
+##### 設計想法  
+\  
+
+原始資料不分大段小段其實有35個地段，但小段多為大段下的小區段，例如- 大南灣寶斗厝坑小段。考量到35個地段不適合以盒形圖呈現，且雖分為小段但仍同屬同一地區的性質，故筆者認為將同一大段下之小段合併仍能呈現出該地段的房價資訊。又考量到類別資料中會出現的`Sparse Data`問題(單一類別中的觀察值數量過少，導致進行統計檢定甚至繪圖時出現偏差)，故將小段合併應能避免此一問題。  
+\  
+
+因為該圖共有18個"盒子"，畫面非常繁雜。故筆者將X、Y兩軸皆刪去，僅留下必要的資訊，使畫面一瞬簡潔許多。幸運的是，地段名稱(大段)最長僅4個字，因此可將字體做角度處理而不用將XY軸轉換，使盒形圖的效果更為直覺。  
+\  
+
+該圖的重點在於呈現三個地段和其他地段的明顯差距，因此各地段的準確地價便不需交代，可以直接將Y軸刪掉。隨後加上的兩條輔助線可達到凸顯地價壓制的效果，還可將地價單位偷渡進圖中的效果。最後再將林口區全地段的平均地價標示於太過空曠右上角，平衡掉尷尬感，順便加強地價差異的實感。  
+\  
+
+選色上因為有18個盒子要選，因此果斷交給default，反正一定很鮮豔。背景色也因此被局限在較為平淡低調的色系。最終達到"華國美學"的繪圖效果，還算可以。
