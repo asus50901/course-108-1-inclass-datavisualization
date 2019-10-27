@@ -1,0 +1,69 @@
+---
+title: "每週一圖作業4"
+output: html_document
+params:
+  組員: ["林易霆"]  
+  學號: ["410473002"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+rm(list=ls())
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(colorspace); library(grDevices); library(shiny); library(shinyjs); library(scales)
+library(tidyr); library(showtext); library(tidyverse); library(colorspace)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T)
+```
+
+
+#### 繪圖程式
+
+```{r graph, echo=T, eval=T}
+load(file = "graphData.rda")
+
+# graphData$population %>% View
+
+graphData$population %>%
+  ggplot(aes(x = 年齡層, y = 比例, fill = 區域別, group = 區域別)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9),
+           width = 0.8) +
+  geom_text(mapping = aes(label = sprintf("%.1f%%", 比例*100)),
+            size = 3,
+            colour = 'black',
+            vjust =  0.15,
+            hjust = - 0.075,
+            position = position_dodge(width = 0.9)) +
+  geom_text(aes(label = 區域別),
+            position = position_dodge(width = 0.9),
+            size = 3, hjust = 1.15, 
+            color = "white") +
+  labs(title = "2017年底六都各年齡層人口比例") +
+  ylim(c(0, 0.7)) +
+  theme(aspect.ratio = 0.85, 
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5),
+        axis.title.y = element_text(angle = 0, vjust = 1,
+                                    margin = margin(r = - 35)),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.ticks.x = element_blank()) + 
+        coord_flip()
+```
+
+#### 設計說明
+說明想傳達的訊息（必要）及設計想法（非必要）。寫在***下一行。
+
+*** 
+
+#### 設計想法
+
+將原本堆疊的圖形拆開來呈現較方便比較。因為圖名為"六都各年齡層人口比例"，故分組將依據年齡層分為大組，並在各大組中比較各個直轄市的個別比例。因為圖名已經說明呈現的標的為比例，因此將多餘的X軸直接刪除。  
+\  
+
+又因原本各bar的配色並不清楚區別，所以將各個bar的間隔拉開，增加辨別度。為更加方便做六都的比較，直接將圖例整個刪除，取而代之，將六都的名稱和比例直接放在bar的屁股。最後再把整張圖翻轉，橫向的長條圖比較適合做視覺上的差異比較。
