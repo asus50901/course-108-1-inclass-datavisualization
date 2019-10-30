@@ -228,6 +228,7 @@ library2014 %>%
   mutate(
     讀者年級=as.factor(讀者年級)
     )-> library2014 
+
 library2014 %>%
   mutate(
     學院=reorder(學院,學號,length,order=T)
