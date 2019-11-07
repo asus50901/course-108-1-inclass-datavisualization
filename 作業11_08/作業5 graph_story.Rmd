@@ -1,0 +1,64 @@
+---
+title: "每週一圖作業4"
+output: html_document
+params:
+  組員: ["林易霆"]  
+  學號: ["410473002"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+rm(list=ls())
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(colorspace); library(grDevices); library(shiny); library(shinyjs); library(scales)
+library(tidyr); library(showtext); library(tidyverse); library(colorspace)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T)
+```
+
+
+#### 繪圖程式
+
+```{r graph, echo=T, eval=T}
+load(file = "graphData.rda")
+
+# graphData$transcript %>% View
+
+graphData$grouped.transcript %>% 
+  ggplot() +
+  geom_bar(aes(x = 學期, y = 分類學分,
+               fill = 分類, group = 分類),
+           width = 0.5, stat = "identity",
+           position = position_dodge(width = 0.6, preserve = "single")) +
+  geom_text(aes(x = 學期, y = 分類學分,
+                label = 分類學分, group = 分類),
+            position = position_dodge(width = 0.7), vjust = -0.5) +
+  geom_path(aes(x = 學期, y = 學期總平均/3.5, group = 1)) + 
+  # group = 1 is a dummy, just to add the line onto a discrete x axis
+  geom_point(aes(x = 學期, y = 學期總平均/3.5)) +
+  geom_text(aes(x = 學期, y = 學期總平均/3.5,
+                label = 學期總平均), vjust = -0.5) +
+  scale_y_continuous(name = "學分數",
+                     sec.axis = sec_axis(~.*3.5, name = "學期總平均")) +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(angle = 0,
+                                    margin = margin(r = -10)),
+        axis.title.y.right = element_text(angle = 0, vjust = 1,
+                                          margin = margin(l = -10))
+        )
+
+```
+
+#### 設計說明
+說明想傳達的訊息（必要）及設計想法（非必要）。寫在***下一行。
+
+*** 
+
+#### 傳遞訊息
+
+利用課程分類以及各學期不同分類的修課學分數凸顯自己於大學四年中鑽研領域的轉換過程，並以學期平均描繪出大學四年的學習曲線，展現出轉換過程對於成績的影響。
+大一時毫無目標，虛度光陰。大二以後初步接觸統計領域的課程，在經濟和統計領域兩者間踟躕。於大三時決心往統計領域發展，開始接觸較進階的統計課程，但因統計觀念尚未熟悉，致使成績下降。大四以後完成經濟系的必修，專心修習統計課程，此時已較為熟識統計觀念，成績上升。
