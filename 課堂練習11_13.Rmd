@@ -1,0 +1,297 @@
+---
+title: "課堂練習11_13"
+author: "Y.T Lin"
+date: "2019/11/13"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+### Ch 5.3 Simple Features
+
+We explore the `simple features package`. Some addition features can be added onto the map we've drawn in the previous lecture.  
+\  
+
+```{r library}
+library(sf)
+```  
+\  
+
+The process of the simple features object can be divided into 3 steps:  
+
+* Simple Feature class (`sfg class`): Transform spatial data into simple feature class datas.  
+
+* Simple Feature column (`sfc class`): All of the `sfg` data will be combinded into a Simple Feature Column.  
+
+* Simple Feature Object (`sf class`): The `sfc` will later be combinded with the original spatial data and will have the class of `sf`.  
+
+\  
+
+We start by constructing a `sfg` data.  
+\  
+
+### Ch 5.5.1 Geometry (sfg)  
+\  
+
+#### Points (st_multipoint)  
+\  
+
+```{r geometry sfg points}
+# single point
+point <- st_point(
+  c(2,3)
+)
+
+point %>% ggplot()+geom_sf()
+
+# multi-points
+mpoint <- st_multipoint(
+    rbind(c(1,0),
+        c(2,3),
+        c(-1,2))
+)
+  # rbind() to construct a dataset of points' location data
+mpoint %>% ggplot()+geom_sf()
+```  
+\  
+
+#### Lines (st_multilinestring)  
+\  
+
+```{r geometry sfg line}
+# A single line
+line <- st_linestring( 
+  # Notice we used st_linestring() instead of st_multipoint()
+    rbind(c(1,0),
+        c(2,3),
+        c(-1,2))
+)
+
+line %>% ggplot()+geom_sf()
+
+# Multiple Lines
+
+  # use list() and multiple rbind() to discern different linestrings
+mline <- st_multilinestring(
+  list(
+    rbind(
+      c(1,0),
+      c(2,3),
+      c(-1,3)),
+    rbind(
+      c(-2,3),
+      c(-1,-1))
+    )
+  )
+
+mline %>% ggplot()+geom_sf()
+
+```  
+\  
+
+#### Polygons (st_multipolygons)  
+\  
+
+```{r Geometry sfg polygons}
+# You gotta "close" the shape, by setting a point back to the "starting point"
+
+  # Single Polygon
+outer <-     
+  rbind( # 外圍
+    c(1,5),
+    c(2,1),
+    c(5,1),
+    c(5,5),
+    c(1,5)) # 必需自行輸入起點close it
+
+hole <-
+  rbind( # 洞
+    c(2,4),
+    c(3,2),
+    c(4,3),
+    c(2,4))  # 必需自行輸入起點close it
+  
+poly <- st_polygon(
+  list(
+    outer, 
+    hole
+  )
+) 
+
+poly %>% ggplot()+geom_sf()
+
+# Multiple Polygons
+
+  # multiple "lists" in a list to discern different polygons
+outer2 <- outer + 12
+hole2 <- hole + 12
+
+mpoly <- st_multipolygon(
+  list(
+    list(
+      outer,
+      hole
+    ),
+    list(
+      outer2,
+      hole2
+    )
+  )
+) 
+
+mpoly %>% ggplot()+geom_sf()
+```  
+\  
+
+#### Various sfg classes in one graph (st_geometrycollection)  
+\  
+
+How about a big compilation of different sfg classes features.  
+I.E. (polygon + linestring), (Point + linestrings) ...etc.  
+\  
+
+
+```{r Geometry sfg multi classes}
+
+st_geometrycollection(
+  list(
+    point, mpoint,
+    line, mline,
+    poly, mpoly
+  )
+) %>% ggplot()+ geom_sf()
+
+```  
+\  
+
+### sfc class (Column Construction)  
+\  
+
+`st_sfc()` to construct the desired sfc class (simple feature columns).  
+\  
+
+```{r sfc class formation}
+# build 2 county spatial datas (sfg data)
+sfg_county1 <- st_polygon(list(
+  outer,hole
+))
+sfg_county2 <- st_polygon(list(
+  outer2, hole2
+))
+
+# form the sfc class simple feature column to write the spatial info.
+sfc_county12column <- st_sfc(sfg_county1,sfg_county2)
+
+# show the recorded spatial info.
+sfc_county12column %>% ggplot+geom_sf()
+
+  # View(sfc_county12column)  list of 2 lists(2 counties spatial info)
+```  
+\  
+
+How bout we combine it with a dataframe object?
+```{r combine with df set geometry}
+df_county12 <- data.frame(
+  name = c("county1", "county2"),
+  population = c(100,107)
+)
+
+df_county12 <- df_county12 %>%
+  st_set_geometry(sfc_county12column)
+
+names(df_county12) # now we have a new column "geometry"
+
+# str(df_county12)
+# attributes(df_county12$geometry)
+df_county12
+
+df_county12 %>% ggplot() +
+  geom_sf(aes(fill = population)) +
+  geom_sf_text(aes(label = name))
+```  
+\  
+
+### CH 5.5.4 Write a shp file
+
+save the constructed spatial info data into a shape file `shp`.  
+\  
+
+```{r save to shp,eval = F, echo = T}
+# add in a new file directory in the current working directory
+dir.create("county12")
+write_sf(df_county12,"county12/county12.shp")
+
+# Of course, you can save it into a RDA file, but shp file is a more conventional file type for geometry datas.
+```  
+\  
+
+A little practice to help you get started.  
+\  
+
+```{r shp file practice 1}
+load(url("https://www.dropbox.com/s/uvco1te2kbs6o01/MRT_Taipei.Rda?dl=1"))
+
+# should retrieve the `sf_mrt_tpe` object
+
+# 其中代號’O’為「中和新蘆線」、’BL’為「板南線」，只取出此兩線，並形成一個sf data frame含有以下欄位: 路線名稱、 geometry: 代表各路線的「點、線」圖
+
+sf_mrt_tpe %>% names
+
+# View(sf_mrt_tpe)
+str(sf_mrt_tpe) # it's a dataframe with sf class columns
+
+# Only the BL (blue line) simple feature.
+sf.mrt.blue <- sf_mrt_tpe %>% 
+  select(geometry, 經過路線) %>% 
+  filter(grepl("BL", sf_mrt_tpe$經過路線)) %>% # snatch out the ones with "BL"
+  mutate(站號 = str_extract(經過路線, "(?<=(BL))[:digit:]+")) %>%
+  arrange(站號)
+  # starts with "BL" and extract all the digits  (+, means all the digits) 
+
+# sf.mrt.blue %>% View
+
+sf.mrt.blue.draw <- sf.mrt.blue %>% 
+  st_coordinates() %>%
+  st_linestring() # simple geometry feature
+
+sf.mrt.blue.draw %>% ggplot() + geom_sf(color = "blue") # add in drawings
+  
+```  
+\  
+
+```{r practice 1.1}
+# construct a dataframe with only BL line spatial info
+
+df_BL <- data.frame(
+  line.name = "BL"
+)
+
+sf.mrt.blue.info <- sf.mrt.blue.draw %>% st_sfc() # transform it back to a sfc 
+
+df_BL <- df_BL %>%
+  st_set_geometry(sf.mrt.blue.info)
+
+df_BL # successfully added in
+
+# retrieve the CRS info of the original data
+mrt_crs <- sf_mrt_tpe %>%
+  st_crs 
+
+df_BL <- df_BL %>%
+  st_set_crs(mrt_crs) # set it as the CRS setting for your new dataframe
+
+df_BL
+```  
+\  
+
+#### Practice of sf_Taiwan (5.6)
+
+```{r practice of sf_Taiwan}
+
+```
