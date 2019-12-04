@@ -1,0 +1,225 @@
+---
+title: "課堂練習11_20"
+author: "Y.T Lin"
+date: "2019/11/20"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+## CH 5.7 常見圖資運算
+
+```{r 5.7 up }
+library(spData); library(sf)
+data(world, package = "spData")
+class(world)
+
+  # the current CRS
+world %>% st_crs
+
+  # draw out the world map with the word data
+world %>% st_geometry() %>%
+  ggplot()+geom_sf()
+```  
+\  
+
+```{r change the CRS}
+world %>% 
+  st_transform(crs="+proj=laea +y_0=0 +lon_0=155 +lat_0=-90 +ellps=WGS84 +no_defs") -> world_proj
+  
+world_proj %>%
+  ggplot()+geom_sf()
+```  
+\  
+
+### 5.7.2 Find the center point (st_centroid())
+
+```{r find the centroid}
+library(lwgeom)
+load(url("https://www.dropbox.com/s/elnvocol0nnkcc9/sf_northTaiwan.Rda?dl=1"))
+
+sf_northTaiwan %>%
+  st_centroid(of_largest_polygon = T) ->
+  sf_centroid_northTaiwan
+
+sf_centroid_northTaiwan
+```  
+\  
+
+### CH5.7.5
+
+```{r load sf_taiwan}
+library(rmapshaper);
+
+sf_taiwan <- read_sf("data/COUNTY_MOI_1080726.shp")
+```  
+\ 
+
+```{r simplify the sf file}
+
+sf_taiwan %>%
+  rmapshaper::ms_simplify() -> sf_taiwan_simplify
+
+# Draw out the simplified taiwan map
+sf_taiwan_simplify %>%
+  st_crop(
+    xmin=119, xmax=123,
+    ymin=21, ymax=26
+  ) %>%
+  ggplot()+geom_sf()
+
+```  
+\  
+
+
+### Ch 5.8 ggplot draw a map  
+\  
+
+```{r draw the world map}
+world %>%
+  ggplot()+geom_sf()
+```  
+\  
+
+```{r addin text and labels}
+# show only the Northern America and addin the country names
+world %>% 
+  filter(
+    subregion=="Northern America"
+  ) %>% 
+  ggplot()+geom_sf()+
+  geom_sf_text(
+    aes(label=name_long)
+  )
+```  
+\  
+
+### CH 5.8.3 Set the coordinate systems  
+\  
+
+```{r load the coord objects}
+load(url("https://www.dropbox.com/s/1jwm27dhh4874ch/sf_tpe_mrt.Rda?dl=1"))
+
+sf_taipei %>% st_crs
+
+sf_mrt_tpe_BL %>% st_crs
+```  
+\  
+
+```{r 2 maps with different CRS}
+sf_taipei %>% # 第一層是sf_taipei, 以它的CRS為主
+  ggplot()+
+  geom_sf(
+    aes(fill=COUNTYNAME)
+  )+
+  geom_sf(
+    data=sf_mrt_tpe_BL
+  ) -> tpe_mrt_map1 
+
+tpe_mrt_map1
+
+sf_mrt_tpe_BL %>% # 第一層是sf_mrt_tpe_BL, 以它的CRS為主
+  ggplot()+
+  geom_sf(
+    data = sf_taipei,
+    aes(fill=COUNTYNAME)
+  )+
+  geom_sf() -> tpe_mrt_map2
+
+tpe_mrt_map2
+```  
+\  
+
+### SKIPPED
+
+### CH 5.9 Practice
+
+```{r 5.9 practice}
+load(url("https://www.dropbox.com/s/uvco1te2kbs6o01/MRT_Taipei.Rda?dl=1"))
+
+# Get the CRS info
+sf_mrtStops_tpe %>% st_crs() -> sf_mrtStops_tpe_crs
+
+sf_mrtStops_tpe_crs
+
+# Extract the mrt station coordinates
+stops <- sf_mrtStops_tpe %>% sf::st_coordinates()
+stops
+```  
+\  
+
+### CH 5.9.1 connect the stops into a path 
+
+```{r connect the stops into a path method1}
+mrt_BL0 <- ggplot()
+
+load(url("https://www.dropbox.com/s/uvco1te2kbs6o01/MRT_Taipei.Rda?dl=1"))
+
+  # Extract the Blue Line
+sf_mrtStops_tpe %>%
+  filter(
+    str_detect(經過路線,"BL")
+  ) -> sf_mrtStops_tpe_BL
+
+# Extract the MRT station name
+sf_mrtStops_tpe_BL %>%
+  mutate(
+      站號=str_extract(經過路線,"(?<=(BL))[:digit:]+")
+            ) %>%
+  arrange(站號) -> sf_mrtStops_BL
+
+ # sf_mrtStops_tpe_BL %>% View
+
+#extract the coordinates of the stations
+bl_coords<- sf_mrtStops_tpe_BL %>% st_coordinates()
+
+sf_northTaiwan %>%
+  ggplot()+geom_sf()+
+  geom_sf(
+    data=sf_mrtStops_BL
+  )+
+  coord_sf(
+    xlim=c(121.4,121.7),
+    ylim=c(24.9,25.1)
+  ) -> gg_tpe_mrt
+gg_tpe_mrt
+```
+
+
+```{r connect the points in to path method 2}
+
+sf_mrtStops_tpe_BL %>% 
+  mutate(
+    站號=str_extract(經過路線,"(?<=(BL))[:digit:]+")
+  ) %>%
+  arrange(站號)  %>%
+  st_geometry() %>%
+  st_coordinates() %>% # matrix of coordinates
+  st_linestring() %>%
+  st_sfc() -> sfc_mrtline_BL
+
+sfc_mrtline_BL
+
+# Assign a CRS for sfc_mrtline Bl
+sf_mrtStops_tpe %>% 
+  st_crs -> crs0
+
+sfc_mrtline_BL %>%
+  st_set_crs(crs0) -> sfc_mrtline_BL
+
+#Add lines onto the original points of stations
+
+mrt_BL0 + 
+  geom_sf(
+    data=sfc_mrtline_BL
+  )
+```  
+\  
+
+Just switch to the supplement Rmd, the objectnames are just broken in this course Rmd.

@@ -1,0 +1,247 @@
+---
+title: "課堂練習"
+author: "Y.T Lin"
+date: "2019/11/27"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales); library(magick); library(sf); library(rmapshaper); library(osmdata)
+
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center',
+                      #echo = F
+                      fig.showtext=T)
+```
+
+
+## 5.10.1 OSM data
+
+```{r osm data download}
+download.file("https://www.dropbox.com/s/wisgdb03j01js1r/map.osm?dl=1",
+              destfile = "map.osm")
+st_layers("map.osm")
+
+
+st_read("map.osm",layer="lines") -> sf_ntpu_lines
+
+st_read("map.osm",layer="multipolygons") -> sf_ntpu_multipolygons
+
+st_read("map.osm",layer="points") -> sf_ntpu_points
+```  
+\  
+
+```{r downloading yourself}
+JPisland_lines <- st_read(dsn = "data/JPisland.osm", layer = "lines")
+
+JPisland_points <- st_read("data/JPisland.osm", layer = "points")
+
+JPisland_multipolygon <- st_read("data/JPisland.osm", layer = "multipolygons")
+
+JPisland_points
+```  
+\  
+
+```{r draw the ntpu_lines}
+#sf_ntpu_lines %>% View
+
+# sf_ntput_lines is already a sfc class draw it directly
+
+ggplot(data = sf_ntpu_lines) +
+  geom_sf()
+
+ggplot(data = sf_ntpu_points) + geom_sf() # boring, points of interest
+
+ggplot(data = sf_ntpu_multipolygons) + geom_sf() + geom_sf(data = sf_ntpu_lines)
+```  
+\  
+
+```{r more sophisticated ntpu data processing}
+sf_ntpu_lines %>%
+  ggplot()+geom_sf()+
+  geom_sf(
+    data=sf_ntpu_multipolygons %>%
+      filter(
+        name=="臺北大學社會科學院"
+      ),
+    fill="red"
+  )+ # flag the building red
+  geom_sf_label(
+    data=sf_ntpu_multipolygons %>%
+      filter(
+        name=="臺北大學社會科學院" # give it its name
+      ),
+    aes(label=name), nudge_y = 0.001
+    )+
+  coord_sf( # qualify the bounding box
+    xlim=c(121.36,121.38),
+    ylim=c(24.935,24.95)
+  )
+```
+
+```{r draw the JP island data}
+ggplot(data = JPisland_lines) + geom_sf() # the roads
+
+ggplot(data = JPisland_points) + geom_sf() # points of interest
+
+ggplot(data = JPisland_multipolygon) + geom_sf() # the objects or buldings etc.
+
+JPisland_graph <- ggplot(data = JPisland_multipolygon) + 
+  geom_sf(mapping = aes(fill = landuse)) +
+  geom_sf(data = JPisland_lines) # draw out the roads and objects of the island
+
+# ggsave(plot = JPisland_graph,
+       filename = "JPisland.svg",
+       device = "svg") # svg files are perfect for embedding into a website
+
+# more complicated twists can be added, this is just a plain example.
+```  
+\  
+
+# 5.10.2 Overpass query
+
+```{r bbox method for overpass query}
+# key-value查詢: https://wiki.openstreetmap.org/wiki/Map_Features
+
+library(osmdata)
+# open pass query with bounding box
+bbox_taipei <- opq(
+  bbox = c(121.4616,25.1050,121.6058,24.9894)  # set the map boundary
+) 
+
+bbox_tp_multiSF <- bbox_taipei %>%
+  osmdata::add_osm_feature(
+    key = "tourism", 
+    value = "attraction") %>%
+  osmdata_sf() # osmdata_sf to make it an multiple sf class object
+  # gotta snatch out the sf object desired for drawing
+
+names(bbox_tp_multiSF) # show the things you can snatch
+
+ggplot(data = bbox_tp_multiSF$osm_points) + 
+  geom_sf() 
+```  
+\  
+
+```{r play with MRT lines}
+bbox_taipei %>% 
+  add_osm_feature(
+    key="railway", value="subway"
+  ) %>%
+  osmdata_sf() -> map_taipei_subway
+
+map_taipei_subway
+```  
+\  
+
+```{r distinguish the different MRT lines}
+# distinct the different lines
+  map_taipei_subway$osm_lines %>%
+  mutate(
+    length=st_length(geometry),
+    shortname=str_replace(name,"捷運","") %>%
+      str_extract("[:graph:]+(?=線)")
+  ) -> sf_tpe_mrt
+
+#show me only the BLUE line
+sf_tpe_mrt %>%
+  filter(
+    shortname=="板南"
+  ) %>%
+  st_geometry() -> sfc_BL
+
+# draw
+sfc_BL %>% st_union() %>%
+  ggplot()+geom_sf()
+
+# should return a BLUE line route... 
+```  
+\  
+
+```{r draw all the MRT lines}
+sf_tpe_mrt %>%
+group_by(
+    shortname
+  ) %>%
+  summarise(
+    geometry=st_union(geometry)
+  ) %>%
+  ungroup() %>%
+  na.omit() -> sf_tpe_mrt
+
+
+sf_tpe_mrt %>%
+  ggplot()+geom_sf(
+    aes(color=shortname, fill=shortname), size=1
+  ) +
+  geom_sf_text(
+    aes(label=shortname)
+  )+
+  labs(title="台北捷運路線圖")
+# should return a beautiful colorful MRT route
+```  
+\  
+
+```{r TP administration sector ex}
+bbox_taipei %>%
+  add_osm_feature(
+    key="admin_level", value="5"
+  ) %>%
+  osmdata_sf() -> map_taipei_boundary
+
+map_taipei_boundary  
+
+map_taipei_boundary$osm_multipolygons -> map_taipei
+```  
+\  
+
+```{r ex of an error bc geometry names are too long,eval=FALSE}
+map_taipei %>%
+  ggplot()+
+  geom_sf()
+```  
+\  
+
+```{r try again for the admins}
+map_taipei %>%
+  st_geometry() -> sfc_map_taipei
+for(i in seq_along(sfc_map_taipei)){
+  names(sfc_map_taipei[[i]][[1]]) <-
+    1:length(names(sfc_map_taipei[[i]][[1]]))
+}
+
+map_taipei %>%
+  st_set_geometry(
+    sfc_map_taipei
+  ) -> map_taipei2
+
+map_taipei2 %>%
+  ggplot()+
+  geom_sf()
+```
+
+```{r TP complex graphing, eval = F}
+# should return a map of admins and MRT routes
+
+# Error: the sf_tpe_mrt is an empty data
+
+map_taipei %>%
+  osm_geom_rename() %>%
+  ggplot()+
+  geom_sf()+
+  geom_sf_text(
+    aes(label=name), size=5/.pt
+  )+
+  geom_sf(
+    data=sf_tpe_mrt, 
+    aes(color=shortname, fill=shortname),
+    size=0.5
+  ) 
+```  
+\  
+
+## Chapter 6 Guide, Facet and Theme
+
+

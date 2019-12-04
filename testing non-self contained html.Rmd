@@ -1,0 +1,40 @@
+---
+title: "Untitled"
+author: "Y.T Lin"
+date: "2019/12/4"
+output: 
+  html_document:
+  self_contained: False
+  lib_dir: "testing support"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Let's try using bootstrap to embellish our Rmarkdown! 
+
+It's (probably) similar to how you embed html code in your previous rmarkdown projects 
+
+<center> What ever </center>
+
+<strong> bold font </strong>
+
+<span style="color:blue"> blue words </span>
+
+
+## Try some actual bootstrap coding  
+\  
+
+This failed to present...
+
+
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+  <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
