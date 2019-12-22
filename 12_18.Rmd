@@ -1,0 +1,60 @@
+---
+title: "課堂練習12_18"
+author: "Y.T Lin"
+date: "2019/12/18"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+```{r srcing the required R script for web applications}
+source("https://www.dropbox.com/s/mdx4777ugnluspz/webApplications.R?dl=1", encoding = "UTF-8")
+```
+
+```{r get the sample data, eval = F}
+dir.create(
+  "./1211"
+)
+download.file("https://raw.githubusercontent.com/tim8537099/course-108-1-inclass-datavisualization/master/example/tet.Rmd",
+              destfile="1211/tet.Rmd"
+)
+download.file("https://github.com/tim8537099/course-108-1-inclass-datavisualization/blob/master/example/plot_us.Rda?raw=true",
+              destfile="1211/plot_us.Rda"
+)
+
+file.edit("1211/tet.Rmd")
+
+# This returns an error
+```
+
+Let's try a new example with our own svg files
+
+```{r create a new html file, eval = F}
+project_html_create(
+  main_file="main.html",
+  type="plain", # or bs : bootstrap
+  dirlib="./1211/web",
+  structure=c(
+    "js",
+    "css",
+    "assets")
+)
+```  
+\  
+
+```{r transform a plot to the desired svg, eval = F}
+download.file("https://www.dropbox.com/s/y2h5iyutq8orlo0/plot1.svg?dl=0",
+              destfile = "data/plot1.svg")
+```
+
+```{r open and edit the main html}
+file.edit("./1211/web/main.html")
+```
+
+# servr::httd() to open local host to edit some js files

@@ -1,0 +1,5 @@
+document.getElementById('gridSVG')
+
+var targetObj = document.getElementById("gridSVG")
+
+targetObj

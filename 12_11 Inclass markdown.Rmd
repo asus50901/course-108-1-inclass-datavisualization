@@ -1,0 +1,78 @@
+---
+title: "Brief take on HTML"
+author: "Y.T Lin"
+date: "2019/12/11"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+## Brief take on HTML  
+\  
+
+```{r source this}
+source("https://www.dropbox.com/s/mdx4777ugnluspz/webApplications.R?dl=1")
+
+# add some functions to help with your html script generation
+```  
+\  
+
+```{r head start for html}
+
+# create a html file "index.html" with the directory webProject0
+project_html_create(
+  main_file="index.html",
+  type="plain", # or bs : bootstrap
+  dirlib="webProject0",
+  structure=c(
+    "js",
+    "css",
+    "assets")
+)
+```  
+\  
+
+The above chunks covers the section of CH 7 till 7.1.7.  
+Most of the work and lecture codes are done in the webProject0/index.html
+You should read that as well.  
+\  
+
+### 7.1.7.1 External CSS file  
+\  
+
+We will now enter the editing of the styling of a html file. We complete the editing with a CSS file. First, we need to create a css file.  
+\  
+
+```{r creating a CSS file}
+file.edit("my.css")
+```  
+\  
+
+The later lecture codes are performed in the my.css file. You'll have to read it.  
+\  
+
+## 7.1.9 SVG  
+\  
+
+Let's try to do some modification ona SVG file.  
+\  
+
+```{r get the SVG}
+dir.create(
+  "./1211"
+)
+download.file("https://raw.githubusercontent.com/tim8537099/course-108-1-inclass-datavisualization/master/example/tet.Rmd",
+              destfile="1211/tet.Rmd"
+)
+download.file("https://github.com/tim8537099/course-108-1-inclass-datavisualization/blob/master/example/plot_us.Rda?raw=true",
+              destfile="1211/plot_us.Rda"
+)
+
+file.edit("1211/tet.Rmd")
+```

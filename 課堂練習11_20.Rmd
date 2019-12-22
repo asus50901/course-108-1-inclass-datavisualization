@@ -13,6 +13,19 @@ theme_set(theme_classic())
 knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
 ```
 
+```{r}
+
+table <- chartofnews %>% 
+  mutate(`Link to Article` = paste0("<a href=\"", `Link to Article`, "\">",
+                                    link_title, "</a>")) %>%
+  dplyr::select(COUNTRY, `Link to Article`) %>%
+  dplyr::rename(Country = COUNTRY)
+
+table %>% knitr::kable(format = "html", escape = F)
+
+#  kableExtra::kable_styling(bootstrap_options = c("hover", "condensed"))
+```
+
 ## CH 5.7 常見圖資運算
 
 ```{r 5.7 up }

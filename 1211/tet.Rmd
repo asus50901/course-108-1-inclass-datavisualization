@@ -1,0 +1,40 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### US
+
+```{r}
+load("plot_us.Rda")
+plot_us
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### China
+
+```{r}
+#load("plot_china.Rda")
+#plot_china
+```
+
+### Saudi Arabia
+
+```{r}
+#load("plot_saudi.Rda")
+#plot_saudi
+```
+

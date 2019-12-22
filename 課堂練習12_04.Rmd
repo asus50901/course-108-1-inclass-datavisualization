@@ -5,26 +5,44 @@ date: "2019/12/4"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
 ```
 
-## R Markdown
+## Adjustment for applying ggplotly
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+In cases if the original ggplot goes sour, you need to do some adjustments within the plotly interface. We will demonstrate how to do it in the below codings.  
+\  
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r import the example graph}
+source("https://www.dropbox.com/s/wlv1ssxqq6n4p7u/gg_hw5_004.R?dl=1", encoding = "UTF-8")
 ```
 
-## Including Plots
+```{r draw the sour ggplotly}
+gg_hw5_004 %>%
+  ggplotly() ->
+  pltly_hw5_004
 
-You can also embed plots, for example:
+pltly_hw5_004 # something wierd and off
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```  
+\  
+
+Let's push this `pltly_hw5_004` onto the plotly services and then we can perform some adjustments on the plotly site.  
+\  
+
+```{r pushing}  
+api_create(pltly_hw5_004,filename="pltly_hw5_004",fileopt="overwrite") -> Meta_pltly_hw5_004
+```  
+\  
+
+```{r downloading the adjusted plot}
+
+pltly_hw5_004_v1 <- api_download_plot("1","asus50901")
+
+pltly_hw5_004_v1
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

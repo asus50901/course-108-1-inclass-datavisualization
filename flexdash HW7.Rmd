@@ -1,0 +1,63 @@
+---
+title: "Economist - The World This Week"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Globe View
+
+```{r}
+pltly_nation <- api_download_plot("3","LINYICHI017")
+pltly_nation
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### The World This Week
+
+```{r}
+
+chartofnews <- read.csv("data/chartofnews.csv")
+
+table <- chartofnews %>% 
+  mutate(Link_to_Article = paste0("<a href=\"", Link_to_Article, "\">",
+                                    link_title, "</a>")) %>%
+  dplyr::select(COUNTRY, Link_to_Article) %>%
+  dplyr::rename(Country = COUNTRY,
+                `Link to Article` = Link_to_Article)
+
+table %>% knitr::kable(format = "html", escape = F, align = c("l", "c"),
+                       padding = 5) %>%
+  kableExtra::kable_styling(bootstrap_options = c("condensed", "hover"))
+
+
+```
+
+### KAL's Cartoon
+
+```{r}
+library(rvest)
+KAl.web <- read_html("https://www.economist.com/the-world-this-week/2019/11/21/kals-cartoon")
+
+# Extract the source of the KAL Cartoon picture
+KAL <- html_nodes(KAl.web, ".blog-post__image-block") %>%
+  html_attr(name = "src")
+
+knitr::include_graphics(KAL)
+```
+

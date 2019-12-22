@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Plain</title>
+<link rel="stylesheet" type="text/css"
+  href="css/my.css">
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p>This is a paragraph.</p>
+
+
+<div>"div" 裡面有"div" 會導致分行, "div" 為 block element</div>
+<div>今天天氣<div>很好</div></div>   
+<br>
+<br>
+
+<div>"div"裡面有"span" 則不會, "span"可以進行styling 的調整 (inline element)</div>
+<div>今天天氣<span>很好</span></div>
+<br>
+<br>
+
+<div>How 'bout an easy example of embedding an image</div>
+<div>We use three attributes: "src", "width", and "height"</div>
+<br>
+<img src="https://upload.wikimedia.org/wikipedia/en/d/d8/NTPU_Logo2.jpg" width="100" height="100">
+<br>
+<br>
+
+<div> Now, we add in a little cosmetic elements, with the <b>style</b> attribute in the "img" snippet</div>
+<br>
+<img src="https://upload.wikimedia.org/wikipedia/en/d/d8/NTPU_Logo2.jpg" width="100" height="100" style="border-style: dashed; padding: 25px 50px; background-color: blue">
+<br>
+
+<div>Let's try a different way of sourcing the image</div>
+<br>
+
+<img src = "assets/NTPU_Logo2.jpg" width="100" height="100">
+<br>  
+<br>
+<br>
+
+<div><strong># 7.1.7 CSS</strong></div>
+<br>
+
+<p> Now, let's explore the maneuver of the CSS elements and commands.  <br>
+The CSS cmds can be placed inside the "header" or the beginning of the "body".</p>
+<br>
+
+<p> The below code will set a styling specifically applied to all image objects with dashed border and a aliceblue colored padding border.  <br>
+Now, we can't actually see the CSS "style" codes, you'll have to open up an element inspector to read the said code.</p>
+
+<style>
+img, #myTargetElement, .myBlue {
+  border-style: dashed; 
+  padding: 15px 15px; 
+  background-color: aliceblue
+}
+</style>
+
+<p>"img, #myTargetElement, .myBlue" is called CSS selector. It defines which element(s) should the style applied to. (# for id attr, . for class attr)
+<br>
+<br>
+We must remember that `class` is not unique, while `id` is unique to an object, meaning that `class` tag can be reused but `id` tag must be specified and not able for recycling.</p>
+<br>
+<br>
+
+<p>Now, we have another code chunk (obviously, you need the inspector for this invisible code). <br>
+We will explain what the code does below.</p>
+<br>
+<br>
+<img src="https://upload.wikimedia.org/wikipedia/en/d/d8/NTPU_Logo2.jpg" width="100" height="100">
+<div>天老爺</div>
+<p>不是<span class='myBlue'>吧^_^</span></p>
+<p id='myTargetElement'>沒騙你。</p>
+<br>
+<br>
+
+<p> We give the "不是" as a string of words in a `paragraph`, then we assign the "吧^_^" as a `class = "myBlue"` object, and thus resulting in the CSS styling specified for "img, #myTargetElement, .my.Blue" <br>
+<br>
+Also, we assigned a `id = "myTargetElement"` to the "沒騙你" paragraph of strings.<br>
+That results in the same styling effect of the previously written CSS stying</p>
+<br>
+
+<br>
+
+<br>
+
+<p>Now, this is the code for # 7.1.7.1. This is for a CSS file creation and usage.<br>
+<br>
+"img, #myTargetElement, .myBlue {
+  border-style: dashed; 
+  padding: 15px 15px; 
+  background-color: aliceblue
+}"
+<br>
+<br>
+We put this code in a `.css file` and we later add the code below in the `html header` to import the CSS file's effect<br>
+<br>
+
+"< link rel="stylesheet" type="text/css"
+  href="css/my.css">"
+</p>
+<br>
+<br>
+
+<p><strong>Javascript</strong></p>
+<br>
+<br>
+
+<p>Let's try some Javascript.</p>
+<br>
+<br>
+
+<div>Here's an example of a little javascript (requires the inspector to see it)</div>
+<br>
+<br>
+<script>
+  ... Javascript...
+  var a=2
+var b=5
+var c=a+b
+</script>
+<br>
+<br>
+
+<p>When a `variable` <b>first</b> appears, we need to add the "var" to specify it.</p>
+
+<div>今天天氣<span>很好</span></div>
+<br>
+<br>
+
+<div><strong># 7.1.8.2</strong></div>
+<br>
+<br>
+
+<p>JS veiws every `< tab>...< /tab>` as an object, and it let it twirls with various ways (called "Method").</p>
+
+</body>
+</html>
