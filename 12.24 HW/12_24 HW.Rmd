@@ -1,0 +1,187 @@
+---
+title: "NTPU 活動觀察家"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include = F}
+library(flexdashboard); library(ggplot2)
+
+######## movie #########
+
+movie <- data.frame(時間點=rep(c("11/03", "11/04", "11/05", "11/06", "11/07", "11/08"),each=3),
+                  類別=rep(c("海報", "臉書", "網站"),6),
+                  點擊次數=c(7, 6, 6, 10, 8, 8,
+                        10, 8, 8, 10, 12, 16,
+                        10, 15, 18, 10, 16, 19))
+
+  # drawing the plot of frequency
+movieplot <- ggplot(data=movie, aes(x=時間點, y=點擊次數, fill=類別)) +
+  geom_bar(stat="identity", color="grey",position=position_dodge(), width = 0.6) + 
+  geom_hline(yintercept=15, color='coral', linetype="dashed", size=1.2) + 
+  scale_fill_manual(values=c("海報" = "#00CC00", "臉書" = "orange", "網站" = "coral")) + 
+  theme_classic()
+
+# sum the views by different srcs
+agg.movie <- aggregate(movie$點擊次數, by = list(Category = movie$類別), FUN = sum)
+
+######## toy #########
+
+toy <- data.frame(時間點=rep(c("10/09","11/18", "11/19", "11/20", "11/21", "11/22", "11/23", "11/27"),each=3),
+                       類別=rep(c("海報", "臉書", "網站"),8),
+                       點擊次數=c(0,0,4,
+                              3,2,4,
+                              9,8,13,
+                              15,12,19,
+                              19,15,22,
+                              26,25,32,
+                              28,30,37,
+                              28,34,37))
+
+# drawing the plot of frequency
+toyplot <- ggplot(data=toy, aes(x=時間點, y=點擊次數, fill=類別)) +
+  geom_bar(stat="identity", color="grey",position=position_dodge(), width = 0.6) + 
+  geom_hline(yintercept=15, color='#0066FF', linetype="dashed", size=1.2) + 
+  scale_fill_manual(values=c("海報" = "#00CC00", "臉書" = "orange", "網站" = "coral")) + 
+  theme_classic()
+
+# sum the views by different srcs
+agg.toy <- aggregate(toy$點擊次數, by = list(Category = toy$類別), FUN = sum)
+
+
+######## Xmas #########
+
+xmas <- data.frame(時間點=rep(c("12/16","12/17","12/18"),each=3),
+                     類別=rep(c("海報", "臉書", "網站"),3),
+                     點擊次數=c(6,3,5,
+                            14,12,14,
+                            14,14,15))
+
+# drawing the plot of frequency
+xmasplot <- ggplot(data=xmas, aes(x=時間點, y=點擊次數, fill=類別)) +
+  geom_bar(stat="identity", color="grey",position=position_dodge(), width = 0.6) + 
+  geom_hline(yintercept=15, color='#00cc66', linetype="dashed", size=1.2) + 
+  scale_fill_manual(values=c("海報" = "#00CC00", "臉書" = "orange", "網站" = "coral")) + 
+  theme_classic()
+
+
+# sum the views by different srcs
+agg.xmas <- aggregate(xmas$點擊次數, by = list(Category = xmas$類別), FUN = sum)
+
+
+```
+
+
+青銀共賞電影
+==========================
+
+Row {data-width = 150}
+------------------------------
+### Poster
+```{r vbox1}
+library(flexdashboard)
+valueBox(value = agg.movie[1, 2], icon = "fa-info-circle", caption = "Poster", color = "green")
+```
+
+### FB
+```{r vbox1a}
+valueBox(value = agg.movie[3, 2], icon = "fa-facebook-square", caption = "FB", color = "orange")
+```
+
+### Website
+```{r vbox1b}
+valueBox(value = agg.movie[2, 2], icon = "fa-rss", caption = "Website", color = "coral")
+```
+
+Row {data-width = 600}
+---------------------------
+### Poster
+```{r poster1}
+library(ggplot2)
+knitr::include_graphics(path = "https://i.imgur.com/a2cAR5X.jpg")
+```
+
+### Stat
+```{r analysis1, fig.height = 5, fig.width = 5}
+movieplot
+```  
+
+### Text 1
+
+Some commentary about Frame 1.
+
+北大玩具節 
+======================================
+
+Row {data-width = 150}
+------------------------------
+### Poster
+```{r vbox2}
+library(flexdashboard)
+valueBox(value = agg.toy[1, 2], icon = "fa-info-circle", caption = "Poster", color = "green")
+```
+
+### FB
+```{r vbox2a}
+valueBox(value = agg.toy[3, 2], icon = "fa-facebook-square", caption = "FB", color = "orange")
+```
+
+### Website
+```{r vbox2b}
+valueBox(value = agg.toy[2, 2], icon = "fa-rss", caption = "Website", color = "coral")
+```
+
+
+Row {data-width = 600}
+---------------------------
+### Poster
+```{r poster2}
+knitr::include_graphics(path = "https://i.imgur.com/A5BOGCU.jpg")
+```
+
+### Stat
+```{r analysis2, fig.height = 5, fig.width = 5}
+toyplot
+```  
+
+### Text 2
+
+Some commentary about Frame 2.
+
+聖誕點燈暨北大管樂節 
+===============================================
+
+Row {data-width = 150}
+------------------------------
+### Poster
+```{r vbox3}
+library(flexdashboard)
+valueBox(value = agg.xmas[1, 2], icon = "fa-info-circle", caption = "Poster", color = "green")
+```
+
+### FB
+```{r vbox3a}
+valueBox(value = agg.xmas[3, 2], icon = "fa-facebook-square", caption = "FB", color = "orange")
+```
+
+### Website
+```{r vbox3b}
+valueBox(value = agg.xmas[2, 2], icon = "fa-rss", caption = "Website", color = "coral")
+```
+
+Row {data-width = 600}
+---------------------------
+### Poster
+```{r poster 3}
+knitr::include_graphics(path = "https://i.imgur.com/jHuJgHN.jpg")
+```
+
+### Stat
+```{r analysis3, fig.height = 5, fig.width = 5}
+xmasplot
+```
+
+### Text 3
+Some commentary about Frame 3.

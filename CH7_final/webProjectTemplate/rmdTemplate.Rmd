@@ -1,0 +1,56 @@
+---
+title: "範本"
+output: 
+  html_document:
+    css: ['css/mystyle.css']
+    includes:
+      in_header: ["external/in_header/header.html"]
+      before_body: ["external/before_body/bf_body.html"]
+      after_body: ["external/after_body/af_body.html"]
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(sf); library(osmdata); library(rmapshaper); library(htmlwidgets); library(widgetframe); library(htmltools)
+library(spData); library(colorspace)
+
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+#theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T, echo = F)
+```
+
+### Try some JS code  
+\  
+
+<script id='json1' type="application/json">
+{
+"name": "John",
+"age": 30,
+"cars": [ "Ford", "BMW", "Fiat" ]
+}  
+</script>
+
+
+```{js}
+var jd = document.getElementById('json1').innerHTML
+var jsd = JSON.parse(jd)
+```
+
+
+### R object to JSON
+
+```{r r object to JSON}
+# ggplot2裡的mtcars dataframe
+mtcars %>%
+  jsonlite::toJSON() %>%  ## (1)
+  writeLines("mtcars.json") ## (2) turn it into a json file, throw it into the cd as mtcars.json (file !)
+```
+
+```{r include JSON into HTML script}
+htmltools::includeScript(
+  "mtcars.json",
+  type="application/json",
+  id="mtcars"
+)
+```

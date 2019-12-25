@@ -1,0 +1,46 @@
+---
+title: "課堂練習12_25"
+author: "Y.T Lin"
+date: "2019/12/25"
+output: html_document
+---
+
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(colorspace); library(scales)
+font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T, echo = F)
+```
+
+```{r srcing the required R script for web applications}
+source("webApplications.R", encoding = "UTF-8")
+```
+
+### Create a web project for practicing
+
+```{r create, eval=FALSE}
+# just creating a directory for putting the web project
+webapp_project_create(dirlib = "./CH7_final", overwrite = T)
+
+# should auto download a zipfile for web project templates, FAIL
+# we do this manually
+```  
+\  
+
+### Try some JS code  
+\  
+
+<script id='json1' type="application/json">
+{
+"name": "John",
+"age": 30,
+"cars": [ "Ford", "BMW", "Fiat" ]
+}  
+</script>
+
+
+```{js}
+var jd = document.getElementById('json1').innerHTML
+var jsd = JSON.parse(jd)
+```
